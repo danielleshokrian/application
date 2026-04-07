@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:status:env": "./scripts/db-env",
+    "db:reset": "supabase db reset && npm run db:sync",
+    "db:sync": "supabase db push",
+    "db:studio": "supabase studio"
   },
   "dependencies": {
     "next": "14.2.5",

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Reads Supabase local dev connection details and outputs .env values.
+# Usage: ./scripts/db-env         (prints to stdout)
+#        eval $(./scripts/db-env)  (exports into current shell)
+
+set -euo pipefail
+
+STATUS=$(supabase status 2>&1) || {
+  echo "Error: supabase is not running. Start it with: supabase start" >&2
+  exit 1
+}
+
+extract() {
+  echo "$STATUS" | grep -oP "(?<=${1}: ).*" | tr -d '[:space:]'
+}
+
+API_URL=$(extract "API URL")
+ANON_KEY=$(extract "anon key")
+SERVICE_ROLE_KEY=$(extract "service_role key")
+
+if [[ -z "$API_URL" || -z "$ANON_KEY" || -z "$SERVICE_ROLE_KEY" ]]; then
+  echo "Error: Could not parse supabase status output." >&2
+  echo "$STATUS" >&2
+  exit 1
+fi
+
+cat <<EOF
+NEXT_PUBLIC_SUPABASE_URL=${API_URL}
+NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
+SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
+EOF
