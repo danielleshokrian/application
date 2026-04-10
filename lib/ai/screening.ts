@@ -3,6 +3,11 @@ import type { AIScreeningResult, CandidateResearch, Job } from '@/types'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+/** Strip markdown code fences that Claude sometimes wraps around JSON */
+function stripMarkdown(text: string): string {
+  return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+}
+
 /**
  * Parse and screen a resume against a job description.
  * Returns a structured fit score with rationale.
@@ -61,7 +66,7 @@ Be honest and specific. Identify real gaps, not just surface-level issues.`
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  return JSON.parse(text) as AIScreeningResult
+  return JSON.parse(stripMarkdown(text)) as AIScreeningResult
 }
 
 /**
@@ -117,7 +122,7 @@ Return ONLY valid JSON (no markdown):
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  return JSON.parse(text) as CandidateResearch
+  return JSON.parse(stripMarkdown(text)) as CandidateResearch
 }
 
 /**
