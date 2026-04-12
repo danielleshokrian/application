@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 async function getStats() {
   const { data: apps } = await supabaseAdmin
     .from('applications')

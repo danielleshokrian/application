@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 const STATUS_CLASSES: Record<string, string> = {
   applied: 'status-applied',
   screened: 'status-screened',
