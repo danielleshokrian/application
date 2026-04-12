@@ -122,7 +122,6 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                   application.ai_score >= 50 ? 'bg-yellow-50 border border-yellow-200' :
                   'bg-red-50 border border-red-200'
                 }`}>
-                  {/* Score circle */}
                   <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center shrink-0 font-bold ${
                     application.ai_score >= 70 ? 'bg-green-500 text-white' :
                     application.ai_score >= 50 ? 'bg-yellow-500 text-white' :
@@ -162,8 +161,8 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                     />
                   </div>
                 </div>
-                </div>
 
+                {/* Skills */}
                 {application.ai_parsed_skills && (
                   <div>
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Skills Detected</h3>
@@ -177,6 +176,7 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                   </div>
                 )}
 
+                {/* Stats */}
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   {application.ai_years_experience && (
                     <div className="bg-gray-50 rounded-lg p-3">
@@ -200,6 +200,7 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                   )}
                 </div>
 
+                {/* Achievements */}
                 {application.ai_achievements && application.ai_achievements.length > 0 && (
                   <div>
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Key Achievements</h3>
