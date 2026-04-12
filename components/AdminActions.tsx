@@ -65,8 +65,8 @@ export default function AdminActions({ application }: Props) {
     setIsRunningScreen(false)
 
     if (res.ok) {
-      setMessage({ type: 'success', text: `Re-screening complete. Score: ${data.score}/100` })
-      setTimeout(() => router.refresh(), 800)
+      setMessage({ type: 'success', text: `Re-screening complete. Score: ${data.score}/100 — reloading...` })
+      setTimeout(() => window.location.reload(), 1200)
     } else {
       setMessage({ type: 'error', text: data.error || 'Screening failed' })
     }

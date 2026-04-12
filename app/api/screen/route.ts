@@ -76,6 +76,8 @@ export async function POST(request: NextRequest) {
         ai_education: screeningResult.education,
         ai_employers: screeningResult.employers,
         ai_achievements: screeningResult.achievements,
+        ai_strengths: screeningResult.strengths,
+        ai_gaps: screeningResult.gaps,
       })
       .eq('id', applicationId)
 

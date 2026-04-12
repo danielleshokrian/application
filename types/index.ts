@@ -43,6 +43,8 @@ export interface Application {
   ai_education: string | null
   ai_employers: string[] | null
   ai_achievements: string[] | null
+  ai_strengths: string[] | null
+  ai_gaps: string[] | null
   ai_candidate_brief: string | null
   ai_research_linkedin: string | null
   ai_research_twitter: string | null

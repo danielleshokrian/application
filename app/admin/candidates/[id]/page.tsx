@@ -112,26 +112,57 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
         <div className="lg:col-span-2 space-y-6">
           {/* AI Screening Results */}
           <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">AI Screening</h2>
-              {application.ai_score !== null && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Fit Score</span>
-                  <div className={`text-2xl font-bold ${
-                    application.ai_score >= 70 ? 'text-green-600' :
-                    application.ai_score >= 50 ? 'text-yellow-600' : 'text-red-600'
-                  }`}>
-                    {application.ai_score}<span className="text-base font-normal text-gray-400">/100</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <h2 className="font-semibold text-gray-900 mb-4">AI Screening</h2>
 
             {application.ai_score !== null ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 leading-relaxed">{application.ai_score_rationale}</p>
+              <div className="space-y-5">
+                {/* Score + verdict banner */}
+                <div className={`rounded-xl p-4 flex items-center gap-5 ${
+                  application.ai_score >= 70 ? 'bg-green-50 border border-green-200' :
+                  application.ai_score >= 50 ? 'bg-yellow-50 border border-yellow-200' :
+                  'bg-red-50 border border-red-200'
+                }`}>
+                  {/* Score circle */}
+                  <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center shrink-0 font-bold ${
+                    application.ai_score >= 70 ? 'bg-green-500 text-white' :
+                    application.ai_score >= 50 ? 'bg-yellow-500 text-white' :
+                    'bg-red-500 text-white'
+                  }`}>
+                    <span className="text-xl leading-none">{application.ai_score}</span>
+                    <span className="text-xs font-normal opacity-80">/100</span>
+                  </div>
+                  <div>
+                    <div className={`text-base font-bold mb-1 ${
+                      application.ai_score >= 70 ? 'text-green-800' :
+                      application.ai_score >= 50 ? 'text-yellow-800' :
+                      'text-red-800'
+                    }`}>
+                      {application.ai_score >= 85 ? '🟢 Exceptional Match — Strong hire signal' :
+                       application.ai_score >= 70 ? '🟢 Strong Match — Worth interviewing' :
+                       application.ai_score >= 55 ? '🟡 Partial Match — Some gaps' :
+                       application.ai_score >= 40 ? '🟠 Weak Match — Significant gaps' :
+                       '🔴 Poor Fit — Does not meet requirements'}
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">{application.ai_score_rationale}</p>
+                  </div>
                 </div>
+
+                {/* Score bar */}
+                <div>
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Poor fit</span><span>Exceptional match</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${
+                        application.ai_score >= 70 ? 'bg-green-500' :
+                        application.ai_score >= 50 ? 'bg-yellow-500' : 'bg-red-400'
+                      }`}
+                      style={{ width: `${application.ai_score}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
 
                 {application.ai_parsed_skills && (
                   <div>
@@ -181,9 +212,37 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                     </ul>
                   </div>
                 )}
+
+                {/* Strengths & Gaps */}
+                {(application.ai_strengths?.length || application.ai_gaps?.length) ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <h3 className="text-xs font-semibold text-green-700 mb-2">✓ Strengths</h3>
+                      <ul className="space-y-1">
+                        {(application.ai_strengths || []).map((s, i) => (
+                          <li key={i} className="text-xs text-green-800">{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-3">
+                      <h3 className="text-xs font-semibold text-red-700 mb-2">✗ Gaps</h3>
+                      <ul className="space-y-1">
+                        {(application.ai_gaps || []).map((g, i) => (
+                          <li key={i} className="text-xs text-red-800">{g}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">AI screening in progress...</p>
+              <div className="flex items-center gap-3 py-4 text-gray-500">
+                <div className="animate-spin text-xl">⟳</div>
+                <div>
+                  <p className="text-sm font-medium">AI screening pending</p>
+                  <p className="text-xs text-gray-400">Click "Re-run AI Screening" in the sidebar to trigger it now</p>
+                </div>
+              </div>
             )}
           </div>
 
