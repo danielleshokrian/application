@@ -162,7 +162,7 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                     />
                   </div>
                 </div>
-                <div>
+                </div>
 
                 {application.ai_parsed_skills && (
                   <div>
