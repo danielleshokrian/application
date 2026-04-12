@@ -58,6 +58,8 @@ async function getOffer(id: string) {
   return data
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function CandidateProfilePage({ params }: { params: { id: string } }) {
   const [application, statusHistory, interview, offer] = await Promise.all([
     getCandidate(params.id),
