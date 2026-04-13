@@ -20,8 +20,12 @@ export default function ScheduleSelector({ token, slots, applicationId }: Props)
   const [isConfirming, setIsConfirming] = useState(false)
   const [confirmed, setConfirmed] = useState<{ meetingUrl: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Reschedule ("none of these work") state
   const [showCustom, setShowCustom] = useState(false)
   const [customTime, setCustomTime] = useState('')
+  const [isRescheduling, setIsRescheduling] = useState(false)
+  const [rescheduled, setRescheduled] = useState(false)
 
   const handleConfirm = async () => {
     if (!selected) return
@@ -43,6 +47,28 @@ export default function ScheduleSelector({ token, slots, applicationId }: Props)
     }
 
     setConfirmed({ meetingUrl: data.meetingUrl })
+  }
+
+  const handleRescheduleRequest = async () => {
+    if (!customTime.trim()) return
+    setIsRescheduling(true)
+    setError(null)
+
+    const res = await fetch('/api/schedule/reschedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, message: customTime.trim() }),
+    })
+
+    const data = await res.json()
+    setIsRescheduling(false)
+
+    if (!res.ok) {
+      setError(data.error || 'Could not send your request. Please try again.')
+      return
+    }
+
+    setRescheduled(true)
   }
 
   if (confirmed) {
@@ -68,6 +94,19 @@ export default function ScheduleSelector({ token, slots, applicationId }: Props)
     )
   }
 
+  if (rescheduled) {
+    return (
+      <div className="card p-8 text-center">
+        <div className="text-4xl mb-4">📬</div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Request Received!</h2>
+        <p className="text-gray-600">
+          We've sent fresh interview times to your email based on your availability.
+          Please check your inbox and select a slot from the new options.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       {error && (
@@ -84,7 +123,7 @@ export default function ScheduleSelector({ token, slots, applicationId }: Props)
         return (
           <button
             key={slot.id}
-            onClick={() => setSelected(slot.id)}
+            onClick={() => { setSelected(slot.id); setShowCustom(false) }}
             className={`w-full card p-4 text-left transition-all ${
               isSelected
                 ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-300'
@@ -113,39 +152,38 @@ export default function ScheduleSelector({ token, slots, applicationId }: Props)
         )
       })}
 
+      {/* "None of these work" toggle */}
       <button
-        onClick={() => setShowCustom(!showCustom)}
+        onClick={() => { setShowCustom(!showCustom); setSelected(null) }}
         className="w-full text-center text-sm text-brand-500 hover:text-brand-600 py-2"
       >
-        None of these work? Request a different time →
+        {showCustom ? '↑ Back to time options' : 'None of these work? Request a different time →'}
       </button>
 
       {showCustom && (
-        <div className="card p-4 space-y-3">
-          <p className="text-sm text-gray-600">
-            Tell us your preferred time and we'll check with the interviewer.
+        <div className="card p-4 space-y-3 border-brand-200 bg-brand-50">
+          <p className="text-sm text-gray-700 font-medium">Tell us when you're available</p>
+          <p className="text-xs text-gray-500">
+            We'll fetch new slots that match your schedule and email them to you.
           </p>
           <textarea
             value={customTime}
             onChange={(e) => setCustomTime(e.target.value)}
-            rows={2}
-            className="input resize-none"
-            placeholder="e.g. Any day next week after 2pm EST, or mornings work best..."
+            rows={3}
+            className="input resize-none text-sm"
+            placeholder="e.g. Any day next week after 2pm EST, mornings work best, or Mon/Wed/Fri only..."
           />
           <button
-            onClick={() => {
-              // In production: POST to /api/schedule/custom-request
-              alert('Your request has been noted. The interviewer will confirm shortly.')
-              setShowCustom(false)
-            }}
-            className="btn-secondary w-full justify-center"
+            onClick={handleRescheduleRequest}
+            disabled={isRescheduling || !customTime.trim()}
+            className="btn-primary w-full justify-center"
           >
-            Send Request
+            {isRescheduling ? '⟳ Sending request...' : 'Send Availability Request →'}
           </button>
         </div>
       )}
 
-      {selected && (
+      {selected && !showCustom && (
         <button
           onClick={handleConfirm}
           disabled={isConfirming}

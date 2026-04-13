@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { screenResume, researchCandidate } from '@/lib/ai/screening'
-import { sendSchedulingEmail } from '@/lib/email'
-import { getAvailableSlots, createTentativeHold } from '@/lib/calendar'
-import { v4 as uuidv4 } from 'uuid'
-import { addDays } from 'date-fns'
+import { resetAndSchedule } from '@/lib/scheduling'
 
 const SHORTLIST_THRESHOLD = parseInt(process.env.SHORTLIST_THRESHOLD || '65')
 
@@ -150,66 +147,15 @@ async function runCandidateResearch(
 }
 
 async function triggerSchedulingFlow(
-  applicationId: string,
+  _applicationId: string,
   application: Record<string, unknown>,
   job: Record<string, unknown>
 ) {
   try {
-    const interviewerEmail = process.env.INTERVIEWER_EMAIL || 'interviewer@talentai.io'
-
-    // Get available slots
-    const slots = await getAvailableSlots(interviewerEmail)
-
-    // Create tentative holds for each slot
-    const slotRecords = []
-    for (const slot of slots) {
-      const googleEventId = await createTentativeHold(
-        slot,
-        application.full_name as string,
-        (job as { title: string }).title,
-        interviewerEmail
-      )
-
-      const { data: slotRecord } = await supabaseAdmin
-        .from('interview_slots')
-        .insert({
-          application_id: applicationId,
-          interviewer_email: interviewerEmail,
-          start_time: slot.start,
-          end_time: slot.end,
-          status: 'tentative',
-          google_event_id: googleEventId,
-        })
-        .select()
-        .single()
-
-      if (slotRecord) slotRecords.push({ ...slotRecord, label: slot.label, id: slot.id })
-    }
-
-    // Create scheduling token (expires in 5 days)
-    const token = uuidv4().replace(/-/g, '')
-    const { data: tokenRecord } = await supabaseAdmin
-      .from('scheduling_tokens')
-      .insert({
-        application_id: applicationId,
-        token,
-        expires_at: addDays(new Date(), 5).toISOString(),
-      })
-      .select()
-      .single()
-
-    if (!tokenRecord) return
-
-    // Send scheduling email
-    await sendSchedulingEmail({
-      to: application.email as string,
-      candidateName: application.full_name as string,
-      jobTitle: (job as { title: string }).title,
-      slots: slots.map((s) => ({ ...s })),
-      schedulingToken: token,
-    })
-
-    console.log(`[Scheduling] Sent scheduling email to ${application.email}`)
+    await resetAndSchedule(
+      { id: application.id as string, full_name: application.full_name as string, email: application.email as string },
+      { title: (job as { title: string }).title }
+    )
   } catch (err) {
     console.error('[Scheduling] Failed to trigger:', err)
   }

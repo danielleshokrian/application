@@ -58,14 +58,38 @@ async function getOffer(id: string) {
   return data
 }
 
+async function getPendingSlots(id: string) {
+  const { data } = await supabaseAdmin
+    .from('interview_slots')
+    .select('id, start_time, end_time')
+    .eq('application_id', id)
+    .eq('status', 'tentative')
+    .order('start_time', { ascending: true })
+  return data || []
+}
+
+async function getActiveSchedulingToken(id: string) {
+  const { data } = await supabaseAdmin
+    .from('scheduling_tokens')
+    .select('expires_at, created_at')
+    .eq('application_id', id)
+    .eq('used', false)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+  return data || null
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function CandidateProfilePage({ params }: { params: { id: string } }) {
-  const [application, statusHistory, interview, offer] = await Promise.all([
+  const [application, statusHistory, interview, offer, pendingSlots, schedulingToken] = await Promise.all([
     getCandidate(params.id),
     getStatusHistory(params.id),
     getInterview(params.id),
     getOffer(params.id),
+    getPendingSlots(params.id),
+    getActiveSchedulingToken(params.id),
   ])
 
   if (!application) notFound()
@@ -222,7 +246,7 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                     <div className="bg-green-50 rounded-lg p-3">
                       <h3 className="text-xs font-semibold text-green-700 mb-2">✓ Strengths</h3>
                       <ul className="space-y-1">
-                        {(application.ai_strengths || []).map((s, i) => (
+                        {(application.ai_strengths || []).map((s: string, i: number) => (
                           <li key={i} className="text-xs text-green-800">{s}</li>
                         ))}
                       </ul>
@@ -230,7 +254,7 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
                     <div className="bg-red-50 rounded-lg p-3">
                       <h3 className="text-xs font-semibold text-red-700 mb-2">✗ Gaps</h3>
                       <ul className="space-y-1">
-                        {(application.ai_gaps || []).map((g, i) => (
+                        {(application.ai_gaps || []).map((g: string, i: number) => (
                           <li key={i} className="text-xs text-red-800">{g}</li>
                         ))}
                       </ul>
@@ -299,7 +323,12 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
           )}
 
           {/* Interview Section */}
-          <InterviewPanel interview={interview} applicationId={params.id} />
+          <InterviewPanel
+            interview={interview}
+            applicationId={params.id}
+            pendingSlots={pendingSlots}
+            schedulingToken={schedulingToken}
+          />
 
           {/* Offer Generator */}
           {['in_interview', 'offer_sent', 'offer_signed'].includes(application.status) && (
