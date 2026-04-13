@@ -39,7 +39,10 @@ async function getCandidates(params: {
   if (params.from) query = query.gte('created_at', params.from)
   if (params.to) query = query.lte('created_at', params.to)
 
-  const { data, count } = await query
+  const { data, count, error } = await query
+  if (error) {
+    console.error('[Candidates] Supabase query error:', error)
+  }
   return { applications: data || [], total: count || 0 }
 }
 
