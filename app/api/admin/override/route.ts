@@ -23,47 +23,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }
 
-    const { data: current } = await supabaseAdmin
+    const { data: current, error: fetchError } = await supabaseAdmin
       .from('applications')
       .select('status, full_name, email, job:jobs(title)')
       .eq('id', applicationId)
       .single()
 
-    await supabaseAdmin
+    if (fetchError || !current) {
+      console.error('[Override] Failed to fetch application:', fetchError)
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+    }
+
+    console.log(`[Override] ${current.full_name}: ${current.status} → ${newStatus}`)
+
+    const { error: updateError } = await supabaseAdmin
       .from('applications')
       .update({ status: newStatus, admin_override_note: note || null })
       .eq('id', applicationId)
 
+    if (updateError) {
+      console.error('[Override] DB update failed:', updateError)
+      return NextResponse.json({ error: `DB update failed: ${updateError.message}` }, { status: 500 })
+    }
+
+    console.log(`[Override] DB write confirmed: status=${newStatus}`)
+
     await supabaseAdmin.from('status_history').insert({
       application_id: applicationId,
-      from_status: current?.status || null,
+      from_status: current.status,
       to_status: newStatus,
       changed_by: 'admin',
       note: note || 'Manual override by admin',
     })
 
-    // When admin manually shortlists, trigger scheduling NOW (don't rely on
-    // screen route which would ignore score threshold and miss the email).
-    if (newStatus === 'shortlisted' && current?.status !== 'shortlisted') {
+    // When admin manually shortlists, trigger scheduling immediately.
+    // Fire screen with skipScheduling:true so it only saves AI data, never touches status.
+    if (newStatus === 'shortlisted' && current.status !== 'shortlisted') {
       const app = current as unknown as { full_name: string; email: string; job?: { title: string } }
 
       if (app?.email && app?.job?.title) {
-        // Fire scheduling in background — don't await so the UI isn't blocked
         resetAndSchedule(
           { id: applicationId, full_name: app.full_name, email: app.email },
           { title: app.job.title }
         )
           .then((result) => {
-            if (result) {
-              console.log(`[Override] Scheduling email sent to ${app.email}`)
-            } else {
-              console.error('[Override] resetAndSchedule returned null — no slots available')
-            }
+            if (result) console.log(`[Override] Scheduling email sent to ${app.email}`)
+            else console.error('[Override] resetAndSchedule returned null — no slots available')
           })
           .catch((err) => console.error('[Override] Scheduling failed:', err))
 
-        // Also fire the screen route for AI research + score (but skip scheduling
-        // since we just handled it above)
         fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/screen`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
