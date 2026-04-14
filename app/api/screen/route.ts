@@ -28,9 +28,18 @@ export async function POST(request: NextRequest) {
       application.resume_text ||
       `Candidate: ${application.full_name}\nEmail: ${application.email}`
 
-    // When called via admin override (skipScheduling: true), we are here ONLY to
-    // run AI scoring and research. The admin already set the status — don't touch it.
-    if (!skipScheduling) {
+    // Statuses at or beyond shortlisted — admin has made a decision, never downgrade.
+    const adminDecided = ['shortlisted', 'in_interview', 'offer_sent', 'offer_signed'].includes(
+      application.status
+    )
+
+    console.log(
+      `[Screen] Starting for ${application.full_name}: currentStatus=${application.status}, skipScheduling=${!!skipScheduling}, adminDecided=${adminDecided}`
+    )
+
+    // Only reset to 'screened' for fresh auto-screening of newly applied candidates.
+    // Never touch status when admin already decided (shortlisted / further along).
+    if (!skipScheduling && !adminDecided) {
       await supabaseAdmin
         .from('applications')
         .update({ status: 'screened' })
@@ -56,47 +65,38 @@ export async function POST(request: NextRequest) {
 
     const aiSaysShortlist = screeningResult.score >= SHORTLIST_THRESHOLD
 
-    if (skipScheduling) {
-      // Admin-triggered: only save AI data, never change status
+    // AI data saved in all cases; status only written when safe to do so
+    const aiDataUpdate = {
+      ai_score: screeningResult.score,
+      ai_score_rationale: screeningResult.rationale,
+      ai_parsed_skills: screeningResult.skills,
+      ai_years_experience: screeningResult.years_experience,
+      ai_education: screeningResult.education,
+      ai_employers: screeningResult.employers,
+      ai_achievements: screeningResult.achievements,
+      ai_strengths: screeningResult.strengths,
+      ai_gaps: screeningResult.gaps,
+    }
+
+    if (skipScheduling || adminDecided) {
+      // Admin already decided — only save AI data, never touch status
       await supabaseAdmin
         .from('applications')
-        .update({
-          ai_score: screeningResult.score,
-          ai_score_rationale: screeningResult.rationale,
-          ai_parsed_skills: screeningResult.skills,
-          ai_years_experience: screeningResult.years_experience,
-          ai_education: screeningResult.education,
-          ai_employers: screeningResult.employers,
-          ai_achievements: screeningResult.achievements,
-          ai_strengths: screeningResult.strengths,
-          ai_gaps: screeningResult.gaps,
-        })
+        .update(aiDataUpdate)
         .eq('id', applicationId)
 
-      // Run research in background
       runCandidateResearch(applicationId, application, job).catch(console.error)
 
       console.log(
-        `[Screen] Admin-triggered screen complete for ${application.full_name}: score=${screeningResult.score} (status unchanged)`
+        `[Screen] Complete for ${application.full_name}: score=${screeningResult.score}, status=${application.status} (unchanged)`
       )
     } else {
-      // Auto-triggered: status follows AI decision
+      // Auto-triggered on fresh application — status follows AI decision
       const newStatus = aiSaysShortlist ? 'shortlisted' : 'screened'
 
       await supabaseAdmin
         .from('applications')
-        .update({
-          status: newStatus,
-          ai_score: screeningResult.score,
-          ai_score_rationale: screeningResult.rationale,
-          ai_parsed_skills: screeningResult.skills,
-          ai_years_experience: screeningResult.years_experience,
-          ai_education: screeningResult.education,
-          ai_employers: screeningResult.employers,
-          ai_achievements: screeningResult.achievements,
-          ai_strengths: screeningResult.strengths,
-          ai_gaps: screeningResult.gaps,
-        })
+        .update({ ...aiDataUpdate, status: newStatus })
         .eq('id', applicationId)
 
       await supabaseAdmin.from('status_history').insert({
