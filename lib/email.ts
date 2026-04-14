@@ -20,8 +20,14 @@ async function send(options: {
     console.log(`[Email MOCK — no RESEND_API_KEY] To: ${options.to} | Subject: ${options.subject}`)
     return { id: `mock_email_${Date.now()}` }
   }
-  console.log(`[Email REAL] Sending to: ${options.to} | Subject: ${options.subject}`)
-  return await resend.emails.send({ from: FROM, ...options })
+  console.log(`[Email REAL] From: ${FROM} → To: ${options.to} | ${options.subject}`)
+  const result = await resend.emails.send({ from: FROM, ...options })
+  if (result.error) {
+    console.error(`[Email ERROR] Resend rejected: ${JSON.stringify(result.error)}`)
+  } else {
+    console.log(`[Email SENT] id=${result.data?.id}`)
+  }
+  return result
 }
 
 export async function sendApplicationConfirmation(params: {
