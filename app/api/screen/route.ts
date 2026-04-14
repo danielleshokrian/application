@@ -7,7 +7,7 @@ const SHORTLIST_THRESHOLD = parseInt(process.env.SHORTLIST_THRESHOLD || '65')
 
 export async function POST(request: NextRequest) {
   try {
-    const { applicationId } = await request.json()
+    const { applicationId, skipScheduling } = await request.json()
 
     if (!applicationId) {
       return NextResponse.json({ error: 'applicationId required' }, { status: 400 })
@@ -24,26 +24,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 })
     }
 
-    if (!application.resume_text) {
-      console.warn(`[Screen] No resume text for application ${applicationId}`)
-    }
-
     const job = application.job
     const resumeText = application.resume_text || `Candidate: ${application.full_name}\nEmail: ${application.email}`
 
-    // Update status to 'screened'
-    await supabaseAdmin
-      .from('applications')
-      .update({ status: 'screened' })
-      .eq('id', applicationId)
+    // Only mark as "screened" if NOT already at a further-along status.
+    // This prevents the screen route from demoting a status the admin already set.
+    const alreadyProgressed = ['shortlisted', 'in_interview', 'offer_sent', 'offer_signed'].includes(
+      application.status
+    )
 
-    await supabaseAdmin.from('status_history').insert({
-      application_id: applicationId,
-      from_status: 'applied',
-      to_status: 'screened',
-      changed_by: 'ai',
-      note: 'AI screening initiated',
-    })
+    if (!alreadyProgressed) {
+      await supabaseAdmin
+        .from('applications')
+        .update({ status: 'screened' })
+        .eq('id', applicationId)
+
+      await supabaseAdmin.from('status_history').insert({
+        application_id: applicationId,
+        from_status: application.status,
+        to_status: 'screened',
+        changed_by: 'ai',
+        note: 'AI screening initiated',
+      })
+    }
 
     // Run AI resume screening
     let screeningResult
@@ -51,21 +54,22 @@ export async function POST(request: NextRequest) {
       screeningResult = await screenResume(resumeText, job)
     } catch (err) {
       console.error('[Screen] AI screening failed:', err)
-      // Fallback: mark as screened with null score so admin can review manually
-      await supabaseAdmin
-        .from('applications')
-        .update({ status: 'screened' })
-        .eq('id', applicationId)
       return NextResponse.json({ error: 'AI screening failed', applicationId }, { status: 500 })
     }
 
-    const isShortlisted = screeningResult.score >= SHORTLIST_THRESHOLD
+    const aiSaysShortlist = screeningResult.score >= SHORTLIST_THRESHOLD
+    // If admin already moved the candidate forward, respect that — don't demote.
+    const finalStatus = alreadyProgressed
+      ? application.status
+      : aiSaysShortlist
+      ? 'shortlisted'
+      : 'screened'
 
-    // Update application with screening results
+    // Save AI results (status only changes if not already progressed)
     await supabaseAdmin
       .from('applications')
       .update({
-        status: isShortlisted ? 'shortlisted' : 'screened',
+        status: finalStatus,
         ai_score: screeningResult.score,
         ai_score_rationale: screeningResult.rationale,
         ai_parsed_skills: screeningResult.skills,
@@ -78,35 +82,30 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', applicationId)
 
-    if (isShortlisted) {
-      await supabaseAdmin.from('status_history').insert({
-        application_id: applicationId,
-        from_status: 'screened',
-        to_status: 'shortlisted',
-        changed_by: 'ai',
-        note: `AI score ${screeningResult.score}/100 — exceeds threshold of ${SHORTLIST_THRESHOLD}`,
-      })
+    await supabaseAdmin.from('status_history').insert({
+      application_id: applicationId,
+      from_status: alreadyProgressed ? application.status : 'screened',
+      to_status: finalStatus,
+      changed_by: 'ai',
+      note: aiSaysShortlist
+        ? `AI score ${screeningResult.score}/100 — exceeds threshold of ${SHORTLIST_THRESHOLD}`
+        : `AI score ${screeningResult.score}/100 — below threshold of ${SHORTLIST_THRESHOLD}. Pending human review.`,
+    })
 
-      // Run candidate research asynchronously
+    // Trigger scheduling if AI shortlisted and scheduling not already handled by caller
+    if (aiSaysShortlist && !skipScheduling && !alreadyProgressed) {
       runCandidateResearch(applicationId, application, job).catch(console.error)
-
-      // Trigger scheduling flow
-      await triggerSchedulingFlow(applicationId, application, job)
-    } else {
-      await supabaseAdmin.from('status_history').insert({
-        application_id: applicationId,
-        from_status: 'screened',
-        to_status: 'screened',
-        changed_by: 'ai',
-        note: `AI score ${screeningResult.score}/100 — below threshold of ${SHORTLIST_THRESHOLD}. Pending human review.`,
-      })
+      await triggerSchedulingFlow(application, job)
+    } else if (alreadyProgressed || skipScheduling) {
+      // Still run research in background, but don't re-trigger scheduling
+      runCandidateResearch(applicationId, application, job).catch(console.error)
     }
 
     return NextResponse.json({
       success: true,
       applicationId,
       score: screeningResult.score,
-      shortlisted: isShortlisted,
+      shortlisted: aiSaysShortlist,
     })
   } catch (err) {
     console.error('[Screen API]', err)
@@ -147,13 +146,16 @@ async function runCandidateResearch(
 }
 
 async function triggerSchedulingFlow(
-  _applicationId: string,
   application: Record<string, unknown>,
   job: Record<string, unknown>
 ) {
   try {
     await resetAndSchedule(
-      { id: application.id as string, full_name: application.full_name as string, email: application.email as string },
+      {
+        id: application.id as string,
+        full_name: application.full_name as string,
+        email: application.email as string,
+      },
       { title: (job as { title: string }).title }
     )
   } catch (err) {

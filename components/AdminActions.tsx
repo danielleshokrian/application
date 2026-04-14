@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 const STATUSES = [
   { value: 'applied', label: 'Applied' },
@@ -22,7 +21,6 @@ interface Props {
 }
 
 export default function AdminActions({ application }: Props) {
-  const router = useRouter()
   const [newStatus, setNewStatus] = useState(application.status)
   const [note, setNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -45,7 +43,7 @@ export default function AdminActions({ application }: Props) {
 
     if (res.ok) {
       setMessage({ type: 'success', text: `Status updated to "${newStatus}"` })
-      setTimeout(() => router.refresh(), 800)
+      setTimeout(() => window.location.reload(), 1500)
     } else {
       setMessage({ type: 'error', text: data.error || 'Update failed' })
     }
