@@ -56,8 +56,9 @@ export async function POST(request: NextRequest) {
       note: note || 'Manual override by admin',
     })
 
-    // When admin manually shortlists, trigger scheduling immediately.
-    // Fire screen with skipScheduling:true so it only saves AI data, never touches status.
+    // When admin manually shortlists, send the scheduling email immediately.
+    // We do NOT call /api/screen here — that would race against this status write.
+    // Use "Re-run AI Screening" on the profile page if you want the AI score updated.
     if (newStatus === 'shortlisted' && current.status !== 'shortlisted') {
       const app = current as unknown as { full_name: string; email: string; job?: { title: string } }
 
@@ -71,12 +72,6 @@ export async function POST(request: NextRequest) {
             else console.error('[Override] resetAndSchedule returned null — no slots available')
           })
           .catch((err) => console.error('[Override] Scheduling failed:', err))
-
-        fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/screen`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ applicationId, skipScheduling: true }),
-        }).catch((err) => console.error('[Override] Screen trigger failed:', err))
       }
     }
 
