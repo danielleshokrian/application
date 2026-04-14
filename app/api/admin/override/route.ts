@@ -48,6 +48,14 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Override] DB write confirmed: status=${newStatus}`)
 
+    // Immediate read-back to verify the write actually persisted
+    const { data: readback } = await supabaseAdmin
+      .from('applications')
+      .select('status')
+      .eq('id', applicationId)
+      .single()
+    console.log(`[Override] Read-back after write: status=${readback?.status}`)
+
     await supabaseAdmin.from('status_history').insert({
       application_id: applicationId,
       from_status: current.status,

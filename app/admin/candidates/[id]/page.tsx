@@ -24,6 +24,7 @@ async function getCandidate(id: string) {
     .select('*, job:jobs(*)')
     .eq('id', id)
     .single()
+  console.log(`[Page render] getCandidate ${id.slice(0, 8)}: status=${data?.status}`)
   return data
 }
 
