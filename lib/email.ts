@@ -17,10 +17,10 @@ async function send(options: {
   attachments?: Array<{ filename: string; content: string }>
 }) {
   if (!resend) {
-    console.log(`[Email MOCK] To: ${options.to} | Subject: ${options.subject}`)
-    console.log(`[Email MOCK] Body preview: ${options.html.slice(0, 200)}...`)
+    console.log(`[Email MOCK — no RESEND_API_KEY] To: ${options.to} | Subject: ${options.subject}`)
     return { id: `mock_email_${Date.now()}` }
   }
+  console.log(`[Email REAL] Sending to: ${options.to} | Subject: ${options.subject}`)
   return await resend.emails.send({ from: FROM, ...options })
 }
 
