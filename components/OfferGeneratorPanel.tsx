@@ -74,7 +74,7 @@ export default function OfferGeneratorPanel({
       return
     }
 
-    setOffer({ ...data, status: 'draft', job_title: form.jobTitle, start_date: form.startDate, base_salary: form.baseSalary, reporting_manager: form.reportingManager })
+    setOffer({ ...data, id: data.offerId, status: 'draft', job_title: form.jobTitle, start_date: form.startDate, base_salary: form.baseSalary, reporting_manager: form.reportingManager })
     setPreviewContent(data.letterContent)
     setStep('preview')
   }
