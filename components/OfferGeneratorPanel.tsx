@@ -32,6 +32,7 @@ export default function OfferGeneratorPanel({
   )
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [offer, setOffer] = useState(existingOffer)
   const [previewContent, setPreviewContent] = useState(existingOffer?.letter_content || '')
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +88,7 @@ export default function OfferGeneratorPanel({
     const res = await fetch('/api/offers/generate', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ offerId: offer.id }),
+      body: JSON.stringify({ offerId: offer.id, letterContent: previewContent }),
     })
 
     const data = await res.json()
@@ -169,23 +170,44 @@ export default function OfferGeneratorPanel({
       {step === 'preview' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-700">Preview — Review before sending</h3>
-            <button onClick={() => setStep('form')} className="text-xs text-gray-500 hover:text-gray-700">
-              ← Edit Details
-            </button>
+            <h3 className="text-sm font-semibold text-gray-700">
+              {isEditing ? 'Editing Letter' : 'Preview — Review before sending'}
+            </h3>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsEditing(e => !e)}
+                className="text-xs text-brand-500 hover:text-brand-700 font-medium"
+              >
+                {isEditing ? '✓ Done editing' : '✏️ Edit letter'}
+              </button>
+              <button onClick={() => setStep('form')} className="text-xs text-gray-500 hover:text-gray-700">
+                ← Edit Details
+              </button>
+            </div>
           </div>
           <div className="bg-gray-50 rounded-lg p-4 max-h-80 overflow-auto">
-            <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-              {previewContent}
-            </pre>
+            {isEditing ? (
+              <textarea
+                className="w-full min-h-64 text-xs text-gray-700 font-sans leading-relaxed bg-transparent resize-y outline-none"
+                value={previewContent}
+                onChange={e => setPreviewContent(e.target.value)}
+                autoFocus
+              />
+            ) : (
+              <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+                {previewContent}
+              </pre>
+            )}
           </div>
           <div className="flex gap-3">
-            <button onClick={handleSend} disabled={isSending} className="btn-primary">
+            <button onClick={handleSend} disabled={isSending || isEditing} className="btn-primary">
               {isSending ? '⟳ Sending...' : '📨 Send to Candidate'}
             </button>
           </div>
           <p className="text-xs text-gray-400">
-            Sending will email the candidate a link to review and e-sign their offer.
+            {isEditing
+              ? 'Click "Done editing" to finish, then send.'
+              : 'Sending will email the candidate a link to review and e-sign their offer.'}
           </p>
         </div>
       )}
