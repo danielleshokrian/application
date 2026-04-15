@@ -4,25 +4,25 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-zinc-50 text-zinc-900 antialiased;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-lg font-medium text-sm transition-colors;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 rounded-lg font-medium text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
   .btn-danger {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors;
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium text-sm transition-colors;
   }
 
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+    @apply bg-white rounded-xl border border-zinc-200;
   }
 
   .badge {
@@ -30,18 +30,19 @@
   }
 
   .input {
-    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-colors;
+    @apply block w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 outline-none transition-colors;
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-xs font-medium text-zinc-600 mb-1.5;
   }
 
-  .status-applied { @apply bg-gray-100 text-gray-700; }
-  .status-screened { @apply bg-blue-100 text-blue-700; }
-  .status-shortlisted { @apply bg-yellow-100 text-yellow-700; }
-  .status-in_interview { @apply bg-purple-100 text-purple-700; }
-  .status-offer_sent { @apply bg-orange-100 text-orange-700; }
-  .status-offer_signed { @apply bg-green-100 text-green-700; }
-  .status-rejected { @apply bg-red-100 text-red-700; }
+  /* Status badges — subtle color coding, muted backgrounds */
+  .status-applied    { @apply bg-zinc-100 text-zinc-600; }
+  .status-screened   { @apply bg-sky-50 text-sky-700 ring-1 ring-sky-100; }
+  .status-shortlisted { @apply bg-amber-50 text-amber-700 ring-1 ring-amber-100; }
+  .status-in_interview { @apply bg-violet-50 text-violet-700 ring-1 ring-violet-100; }
+  .status-offer_sent { @apply bg-orange-50 text-orange-700 ring-1 ring-orange-100; }
+  .status-offer_signed { @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100; }
+  .status-rejected   { @apply bg-zinc-100 text-zinc-400; }
 }

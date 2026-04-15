@@ -1,6 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import {
+  CalendarPlus, RefreshCw, Loader2, Clock,
+  Video, FileText, AlertCircle,
+} from 'lucide-react'
 
 interface Interview {
   id: string
@@ -29,9 +33,7 @@ interface SchedulingToken {
 interface Props {
   interview: Interview | null
   applicationId: string
-  /** Tentative slots that were sent to the candidate but not yet confirmed */
   pendingSlots?: PendingSlot[]
-  /** The active (unused, non-expired) scheduling token, if any */
   schedulingToken?: SchedulingToken | null
 }
 
@@ -101,12 +103,12 @@ export default function InterviewPanel({
   if (!interview && !hasPendingSlots) {
     return (
       <div className="card p-6">
-        <h2 className="font-semibold text-gray-900 mb-2">Interview</h2>
-        <p className="text-sm text-gray-500 mb-4">
+        <h2 className="font-semibold text-zinc-900 mb-2">Interview</h2>
+        <p className="text-sm text-zinc-500 mb-4">
           No interview scheduled yet. Shortlist the candidate to trigger the scheduling email, or use the button below to send a link manually.
         </p>
         {message && (
-          <p className={`text-sm mb-3 ${messageType === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+          <p className={`text-sm mb-3 ${messageType === 'error' ? 'text-rose-600' : 'text-emerald-600'}`}>
             {message}
           </p>
         )}
@@ -115,7 +117,10 @@ export default function InterviewPanel({
           disabled={isResending}
           className="btn-secondary text-sm"
         >
-          {isResending ? '⟳ Sending…' : '📅 Send Scheduling Link'}
+          {isResending
+            ? <><Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> Sending…</>
+            : <><CalendarPlus className="h-4 w-4" strokeWidth={1.5} /> Send Scheduling Link</>
+          }
         </button>
       </div>
     )
@@ -126,24 +131,27 @@ export default function InterviewPanel({
     return (
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900">Interview</h2>
-          <span className={`badge ${isExpired ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+          <h2 className="font-semibold text-zinc-900">Interview</h2>
+          <span className={`badge ${
+            isExpired
+              ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-100'
+              : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100'
+          }`}>
             {isExpired ? 'Link expired' : 'Awaiting response'}
           </span>
         </div>
 
-        {/* Expiry info */}
         {schedulingToken && (
-          <p className={`text-xs mb-4 ${isExpired ? 'text-red-500' : 'text-gray-400'}`}>
+          <p className={`text-xs mb-4 flex items-center gap-1.5 ${isExpired ? 'text-rose-500' : 'text-zinc-400'}`}>
             {isExpired
-              ? 'The scheduling link has expired — resend to offer new slots.'
-              : `Scheduling link expires in ${expiresIn} day${expiresIn !== 1 ? 's' : ''}`}
+              ? <><AlertCircle className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} /> The scheduling link has expired — resend to offer new slots.</>
+              : `Scheduling link expires in ${expiresIn} day${expiresIn !== 1 ? 's' : ''}`
+            }
           </p>
         )}
 
-        {/* Offered slots */}
         <div className="mb-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
             Slots offered to candidate
           </p>
           <div className="space-y-1.5">
@@ -152,13 +160,13 @@ export default function InterviewPanel({
               return (
                 <div
                   key={slot.id}
-                  className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"
+                  className="flex items-center gap-2.5 text-sm text-zinc-600 bg-zinc-50 rounded-lg px-3 py-2"
                 >
-                  <span className="text-gray-400">◷</span>
+                  <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" strokeWidth={1.5} />
                   <span className="font-medium">
                     {start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                   </span>
-                  <span className="text-gray-400">
+                  <span className="text-zinc-400">
                     {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                   </span>
                 </div>
@@ -167,26 +175,23 @@ export default function InterviewPanel({
           </div>
         </div>
 
-        {/* Feedback */}
         {message && (
-          <p className={`text-sm mb-3 ${messageType === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+          <p className={`text-sm mb-3 ${messageType === 'error' ? 'text-rose-600' : 'text-emerald-600'}`}>
             {message}
           </p>
         )}
 
-        {/* Resend button */}
         <button
           onClick={resendSchedulingLink}
           disabled={isResending}
           className="btn-secondary text-sm w-full justify-center"
         >
           {isResending
-            ? '⟳ Sending…'
-            : isExpired
-            ? '🔄 Resend with Fresh Slots'
-            : '🔄 Resend Scheduling Link'}
+            ? <><Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> Sending…</>
+            : <><RefreshCw className="h-4 w-4" strokeWidth={1.5} /> {isExpired ? 'Resend with Fresh Slots' : 'Resend Scheduling Link'}</>
+          }
         </button>
-        <p className="text-xs text-gray-400 mt-2 text-center">
+        <p className="text-xs text-zinc-400 mt-2 text-center">
           Replaces current slots with new availability and resends the email.
         </p>
       </div>
@@ -199,35 +204,38 @@ export default function InterviewPanel({
   return (
     <div className="card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-gray-900">Interview</h2>
+        <h2 className="font-semibold text-zinc-900">Interview</h2>
         <div className="flex items-center gap-2">
           <span className={`badge ${
             interview.status === 'completed'
-              ? 'bg-green-100 text-green-700'
+              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
               : interview.status === 'cancelled'
-              ? 'bg-red-100 text-red-700'
-              : 'bg-purple-100 text-purple-700'
+              ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-100'
+              : 'bg-violet-50 text-violet-700 ring-1 ring-violet-100'
           }`}>
-            {interview.status === 'scheduled' ? 'Scheduled' :
-             interview.status === 'completed' ? 'Completed' : 'Cancelled'}
+            {interview.status === 'scheduled' ? 'Scheduled'
+              : interview.status === 'completed' ? 'Completed'
+              : 'Cancelled'}
           </span>
-          {/* Allow resending even after cancellation */}
           {interview.status === 'cancelled' && (
             <button
               onClick={resendSchedulingLink}
               disabled={isResending}
-              className="text-xs text-brand-500 hover:underline"
+              className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors"
             >
-              {isResending ? '⟳' : 'Reschedule →'}
+              {isResending
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin inline" />
+                : 'Reschedule →'
+              }
             </button>
           )}
         </div>
       </div>
 
-      <div className="space-y-3 text-sm mb-4">
+      <div className="space-y-2.5 text-sm mb-4">
         {interview.slot && (
-          <div>
-            <span className="text-gray-500">Scheduled: </span>
+          <div className="flex items-center gap-2 text-zinc-600">
+            <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" strokeWidth={1.5} />
             <span className="font-medium">
               {new Date(interview.slot.start_time).toLocaleString('en-US', {
                 weekday: 'short', month: 'short', day: 'numeric',
@@ -237,15 +245,15 @@ export default function InterviewPanel({
           </div>
         )}
         {interview.meeting_url && (
-          <div>
-            <span className="text-gray-500">Meeting: </span>
+          <div className="flex items-center gap-2">
+            <Video className="h-3.5 w-3.5 text-zinc-400 shrink-0" strokeWidth={1.5} />
             <a
               href={interview.meeting_url}
               target="_blank"
               rel="noreferrer"
-              className="text-brand-500 hover:underline font-medium"
+              className="text-zinc-700 hover:text-zinc-900 underline underline-offset-2 font-medium"
             >
-              Join Link ↗
+              Join Meeting
             </a>
           </div>
         )}
@@ -253,16 +261,16 @@ export default function InterviewPanel({
 
       {interview.summary ? (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">AI Summary</h3>
-          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
+          <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">AI Summary</h3>
+          <div className="bg-zinc-50 rounded-lg p-3 text-sm text-zinc-700 leading-relaxed">
             {interview.summary}
           </div>
           {interview.transcript && (
             <details className="mt-3">
-              <summary className="text-xs text-brand-500 cursor-pointer hover:underline">
+              <summary className="text-xs text-zinc-500 cursor-pointer hover:text-zinc-700 transition-colors">
                 View full transcript
               </summary>
-              <pre className="mt-2 text-xs text-gray-600 bg-gray-50 rounded p-3 overflow-auto max-h-64 whitespace-pre-wrap">
+              <pre className="mt-2 text-xs text-zinc-600 bg-zinc-50 rounded p-3 overflow-auto max-h-64 whitespace-pre-wrap">
                 {interview.transcript}
               </pre>
             </details>
@@ -271,7 +279,7 @@ export default function InterviewPanel({
       ) : (
         <div>
           {message && (
-            <p className={`text-sm mb-3 ${messageType === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+            <p className={`text-sm mb-3 ${messageType === 'error' ? 'text-rose-600' : 'text-emerald-600'}`}>
               {message}
             </p>
           )}
@@ -282,9 +290,12 @@ export default function InterviewPanel({
                 disabled={isFetching}
                 className="btn-secondary text-sm"
               >
-                {isFetching ? '⟳ Fetching…' : '📝 Fetch Transcript from Fireflies'}
+                {isFetching
+                  ? <><Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> Fetching…</>
+                  : <><FileText className="h-4 w-4" strokeWidth={1.5} /> Fetch Transcript from Fireflies</>
+                }
               </button>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-zinc-400 mt-2">
                 Fireflies bot auto-joins the meeting. Transcript is available after the call ends.
               </p>
             </>

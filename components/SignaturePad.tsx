@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Loader2, PenLine, Keyboard, CheckCircle2, FileCheck } from 'lucide-react'
 
 interface Props {
   token: string
@@ -25,7 +25,7 @@ export default function SignaturePad({ token, candidateName }: Props) {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.strokeStyle = '#1a2fa0'
+    ctx.strokeStyle = '#18181b'
     ctx.lineWidth = 2.5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
@@ -84,13 +84,12 @@ export default function SignaturePad({ token, candidateName }: Props) {
 
   const getSignatureData = (): string => {
     if (mode === 'type') {
-      // Generate a typed signature as canvas data
       const canvas = document.createElement('canvas')
       canvas.width = 500
       canvas.height = 100
       const ctx = canvas.getContext('2d')!
       ctx.font = 'italic 42px Georgia, serif'
-      ctx.fillStyle = '#1a2fa0'
+      ctx.fillStyle = '#18181b'
       ctx.fillText(typedName || candidateName, 20, 65)
       return canvas.toDataURL()
     }
@@ -133,9 +132,11 @@ export default function SignaturePad({ token, candidateName }: Props) {
   if (signed) {
     return (
       <div className="text-center py-8">
-        <div className="text-4xl mb-3">✅</div>
-        <h3 className="font-semibold text-gray-900">Offer Signed!</h3>
-        <p className="text-sm text-gray-500 mt-1">Refreshing...</p>
+        <div className="flex justify-center mb-3">
+          <CheckCircle2 className="h-12 w-12 text-emerald-500" strokeWidth={1} />
+        </div>
+        <h3 className="font-semibold text-zinc-900">Offer Signed</h3>
+        <p className="text-sm text-zinc-400 mt-1">Refreshing...</p>
       </div>
     )
   }
@@ -146,26 +147,26 @@ export default function SignaturePad({ token, candidateName }: Props) {
       <div className="flex gap-2">
         <button
           onClick={() => setMode('draw')}
-          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            mode === 'draw' ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            mode === 'draw' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
           }`}
         >
-          ✍️ Draw Signature
+          <PenLine className="h-4 w-4" strokeWidth={1.5} /> Draw Signature
         </button>
         <button
           onClick={() => setMode('type')}
-          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            mode === 'type' ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            mode === 'type' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
           }`}
         >
-          ⌨️ Type Signature
+          <Keyboard className="h-4 w-4" strokeWidth={1.5} /> Type Signature
         </button>
       </div>
 
       {mode === 'draw' ? (
         <div>
           <div
-            className="border-2 border-gray-200 rounded-lg bg-white overflow-hidden"
+            className="border-2 border-zinc-200 rounded-xl bg-white overflow-hidden"
             style={{ touchAction: 'none' }}
           >
             <canvas
@@ -183,8 +184,8 @@ export default function SignaturePad({ token, candidateName }: Props) {
             />
           </div>
           <div className="flex justify-between items-center mt-2">
-            <p className="text-xs text-gray-400">Draw your signature above</p>
-            <button onClick={clearCanvas} className="text-xs text-gray-500 hover:text-gray-700">
+            <p className="text-xs text-zinc-400">Draw your signature above</p>
+            <button onClick={clearCanvas} className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors">
               Clear
             </button>
           </div>
@@ -200,7 +201,7 @@ export default function SignaturePad({ token, candidateName }: Props) {
           />
           {typedName && (
             <div
-              className="mt-3 p-4 bg-white border rounded-lg text-3xl text-brand-700"
+              className="mt-3 p-4 bg-white border border-zinc-200 rounded-xl text-3xl text-zinc-800"
               style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}
             >
               {typedName}
@@ -210,10 +211,10 @@ export default function SignaturePad({ token, candidateName }: Props) {
       )}
 
       {error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-rose-600">{error}</p>
       )}
 
-      <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-500">
+      <div className="bg-zinc-50 rounded-xl p-3 text-xs text-zinc-500 leading-relaxed">
         By clicking "Sign Offer", you confirm that you accept all terms and conditions in this offer letter.
         Your electronic signature, IP address, and timestamp will be legally binding.
       </div>
@@ -223,7 +224,10 @@ export default function SignaturePad({ token, candidateName }: Props) {
         disabled={isSigning}
         className="btn-primary w-full justify-center py-3 text-base"
       >
-        {isSigning ? '⟳ Signing...' : '✅ Sign Offer Letter'}
+        {isSigning
+          ? <><Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> Signing...</>
+          : <><FileCheck className="h-4 w-4" strokeWidth={1.5} /> Sign Offer Letter</>
+        }
       </button>
     </div>
   )

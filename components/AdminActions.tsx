@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Loader2, ScanSearch } from 'lucide-react'
 
 const STATUSES = [
   { value: 'applied', label: 'Applied' },
@@ -72,13 +73,13 @@ export default function AdminActions({ application }: Props) {
 
   return (
     <div className="card p-5">
-      <h3 className="font-semibold text-gray-900 mb-4">Admin Actions</h3>
+      <h3 className="font-semibold text-zinc-900 mb-4">Admin Actions</h3>
 
       {message && (
         <div className={`mb-3 p-3 rounded-lg text-sm ${
           message.type === 'success'
-            ? 'bg-green-50 text-green-700 border border-green-200'
-            : 'bg-red-50 text-red-700 border border-red-200'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+            : 'bg-rose-50 text-rose-700 border border-rose-100'
         }`}>
           {message.text}
         </div>
@@ -86,7 +87,7 @@ export default function AdminActions({ application }: Props) {
 
       <div className="space-y-3">
         <div>
-          <label className="label text-xs">Override Status</label>
+          <label className="label">Override Status</label>
           <select
             value={newStatus}
             onChange={(e) => setNewStatus(e.target.value)}
@@ -99,7 +100,7 @@ export default function AdminActions({ application }: Props) {
         </div>
 
         <div>
-          <label className="label text-xs">Note (required for override)</label>
+          <label className="label">Note (required for override)</label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -114,16 +115,22 @@ export default function AdminActions({ application }: Props) {
           disabled={isSubmitting || (newStatus === application.status && !note)}
           className="btn-primary w-full justify-center"
         >
-          {isSubmitting ? 'Updating...' : 'Update Status'}
+          {isSubmitting
+            ? <><Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> Updating...</>
+            : 'Update Status'
+          }
         </button>
 
-        <div className="border-t border-gray-100 pt-3">
+        <div className="border-t border-zinc-100 pt-3">
           <button
             onClick={handleRescreen}
             disabled={isRunningScreen}
             className="btn-secondary w-full justify-center"
           >
-            {isRunningScreen ? '⟳ Running AI Screen...' : '🤖 Re-run AI Screening'}
+            {isRunningScreen
+              ? <><Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> Running AI Screen...</>
+              : <><ScanSearch className="h-4 w-4" strokeWidth={1.5} /> Re-run AI Screening</>
+            }
           </button>
         </div>
       </div>
