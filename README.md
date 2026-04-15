@@ -252,18 +252,6 @@ scheduling_tokens       -- Unique links for slot selection (expires in 5d)
 
 ---
 
-## AI Usage Transparency
-
-This project was built with Claude Code (this very tool). The approach:
-- **Architecture design:** Claude helped structure the 6-phase pipeline as a coherent state machine
-- **Code generation:** All files generated with Claude Code, reviewed and adjusted for correctness
-- **AI prompts:** Manually crafted for each AI task (screening, research, offer letter, Slack welcome) — each prompt is tuned for structured JSON output where needed, and for professional writing quality where needed
-- **Edge cases:** Explicitly designed and implemented (not just documented)
-
-The project demonstrates AI-native building: using Claude to build a system that itself uses Claude as the intelligence layer for every hiring decision.
-
----
-
 ## What I'd Improve With More Time
 
 1. **Real-time updates:** Add Supabase Realtime subscriptions to push pipeline updates to the admin dashboard without refresh
