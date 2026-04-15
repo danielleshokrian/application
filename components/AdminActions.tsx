@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, ScanSearch } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Loader2, ScanSearch, Trash2, AlertTriangle } from 'lucide-react'
 
 const STATUSES = [
   { value: 'applied', label: 'Applied' },
@@ -22,11 +23,14 @@ interface Props {
 }
 
 export default function AdminActions({ application }: Props) {
+  const router = useRouter()
   const [newStatus, setNewStatus] = useState(application.status)
   const [note, setNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [isRunningScreen, setIsRunningScreen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleOverride = async () => {
     if (newStatus === application.status && !note) return
@@ -132,6 +136,60 @@ export default function AdminActions({ application }: Props) {
               : <><ScanSearch className="h-4 w-4" strokeWidth={1.5} /> Re-run AI Screening</>
             }
           </button>
+        </div>
+
+        <div className="border-t border-zinc-100 pt-3">
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="inline-flex items-center gap-2 w-full justify-center px-4 py-2 text-sm font-medium text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Delete Candidate
+            </button>
+          ) : (
+            <div className="rounded-xl border border-rose-100 bg-rose-50 p-4 space-y-3">
+              <div className="flex items-start gap-2 text-rose-700">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={1.5} />
+                <p className="text-xs leading-relaxed">
+                  This will permanently delete <strong>{application.full_name}</strong> and all associated data — interviews, offers, and history. This cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    setIsDeleting(true)
+                    const res = await fetch('/api/admin/delete-candidate', {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ applicationId: application.id }),
+                    })
+                    if (res.ok) {
+                      router.push('/admin/candidates')
+                    } else {
+                      const data = await res.json()
+                      setMessage({ type: 'error', text: data.error || 'Delete failed' })
+                      setShowDeleteConfirm(false)
+                      setIsDeleting(false)
+                    }
+                  }}
+                  disabled={isDeleting}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isDeleting
+                    ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Deleting...</>
+                    : 'Yes, delete'
+                  }
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-3 py-2 bg-white border border-zinc-200 text-zinc-600 text-xs font-medium rounded-lg hover:bg-zinc-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
