@@ -1,5 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
+import { ArrowRight, ExternalLink } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 
 async function getStats() {
   const { data: apps } = await supabaseAdmin
@@ -16,7 +19,6 @@ async function getStats() {
     all.filter((a) => a.ai_score !== null).reduce((s, a) => s + (a.ai_score || 0), 0) /
     (all.filter((a) => a.ai_score !== null).length || 1)
 
-  // Recent 7 days
   const week = new Date()
   week.setDate(week.getDate() - 7)
   const recent = all.filter((a) => new Date(a.created_at) > week).length
@@ -38,20 +40,20 @@ export default async function AdminOverviewPage() {
   const stats = await getStats()
 
   const pipeline = [
-    { key: 'applied', color: 'bg-gray-400' },
-    { key: 'screened', color: 'bg-blue-400' },
-    { key: 'shortlisted', color: 'bg-yellow-400' },
-    { key: 'in_interview', color: 'bg-purple-400' },
-    { key: 'offer_sent', color: 'bg-orange-400' },
-    { key: 'offer_signed', color: 'bg-green-400' },
-    { key: 'rejected', color: 'bg-red-400' },
+    { key: 'applied',      color: 'bg-zinc-300' },
+    { key: 'screened',     color: 'bg-sky-300' },
+    { key: 'shortlisted',  color: 'bg-amber-300' },
+    { key: 'in_interview', color: 'bg-violet-300' },
+    { key: 'offer_sent',   color: 'bg-orange-300' },
+    { key: 'offer_signed', color: 'bg-emerald-300' },
+    { key: 'rejected',     color: 'bg-rose-200' },
   ]
 
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Hiring Overview</h1>
-        <p className="text-gray-500 mt-1">Real-time pipeline across all roles</p>
+        <h1 className="text-xl font-semibold text-zinc-900">Hiring Overview</h1>
+        <p className="text-zinc-500 text-sm mt-1">Real-time pipeline across all roles</p>
       </div>
 
       {/* Top Stats */}
@@ -63,32 +65,32 @@ export default async function AdminOverviewPage() {
           { label: 'Offers Signed', value: stats.byStatus['offer_signed'] || 0 },
         ].map((stat) => (
           <div key={stat.label} className="card p-5">
-            <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-            <div className="text-sm text-gray-500 mt-1">{stat.label}</div>
+            <div className="text-2xl font-semibold text-zinc-900">{stat.value}</div>
+            <div className="text-xs text-zinc-500 mt-1">{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* Pipeline Funnel */}
       <div className="card p-6 mb-8">
-        <h2 className="font-semibold text-gray-900 mb-5">Pipeline Funnel</h2>
+        <h2 className="font-medium text-zinc-900 mb-5">Pipeline Funnel</h2>
         <div className="space-y-3">
           {pipeline.map((stage) => {
             const count = stats.byStatus[stage.key] || 0
             const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0
             return (
               <div key={stage.key} className="flex items-center gap-4">
-                <div className="w-28 text-sm text-gray-600 shrink-0">
+                <div className="w-28 text-xs text-zinc-500 shrink-0">
                   {STATUS_LABELS[stage.key]}
                 </div>
-                <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                <div className="flex-1 bg-zinc-100 rounded-full h-2 overflow-hidden">
                   <div
                     className={`h-full ${stage.color} rounded-full transition-all`}
-                    style={{ width: `${Math.max(pct, 2)}%` }}
+                    style={{ width: `${Math.max(pct, 1)}%` }}
                   />
                 </div>
-                <div className="w-16 text-right text-sm font-medium text-gray-700">
-                  {count} <span className="text-gray-400">({pct}%)</span>
+                <div className="w-20 text-right text-xs text-zinc-600">
+                  {count} <span className="text-zinc-400">({pct}%)</span>
                 </div>
               </div>
             )
@@ -98,10 +100,10 @@ export default async function AdminOverviewPage() {
 
       <div className="flex gap-3">
         <Link href="/admin/candidates" className="btn-primary">
-          View All Candidates →
+          View All Candidates <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
         </Link>
-        <Link href="/careers" className="btn-secondary">
-          Career Portal ↗
+        <Link href="/careers" target="_blank" className="btn-secondary">
+          Career Portal <ExternalLink className="h-4 w-4" strokeWidth={1.5} />
         </Link>
       </div>
     </div>

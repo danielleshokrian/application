@@ -8,8 +8,14 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Server-side Supabase (uses service role — bypasses RLS)
+// cache: 'no-store' prevents Next.js from caching Supabase REST responses,
+// which would otherwise serve stale data even when force-dynamic is set.
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
+  global: {
+    fetch: (url: RequestInfo | URL, options?: RequestInit) =>
+      fetch(url, { ...options, cache: 'no-store' }),
+  },
 })
 
 export type Database = {

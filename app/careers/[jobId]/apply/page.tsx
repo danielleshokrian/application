@@ -2,14 +2,13 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { FileText, Upload, Loader2, CheckCircle2, ChevronRight } from 'lucide-react'
 
 interface Props {
   params: { jobId: string }
 }
 
 export default function ApplyPage({ params }: Props) {
-  const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -75,19 +74,19 @@ export default function ApplyPage({ params }: Props) {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="card p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-            ✓
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <div className="card p-10 max-w-md w-full text-center">
+          <div className="flex justify-center mb-5">
+            <CheckCircle2 className="h-14 w-14 text-emerald-500" strokeWidth={1} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
-          <p className="text-gray-600 mb-2">
+          <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Application Submitted</h2>
+          <p className="text-zinc-500 mb-2 leading-relaxed">
             We've received your application and sent a confirmation email.
           </p>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
             Our AI will review your resume and you'll hear from us within 2 business days if you're a strong match.
           </p>
-          <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-500 font-mono mb-6">
+          <div className="bg-zinc-50 rounded-xl p-3 text-xs text-zinc-400 font-mono mb-6">
             Application ID: {success.applicationId.slice(0, 8).toUpperCase()}
           </div>
           <Link href="/careers" className="btn-secondary">
@@ -99,34 +98,34 @@ export default function ApplyPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link href="/" className="font-bold text-xl text-brand-600">TalentAI</Link>
-          <span className="text-gray-300">›</span>
-          <Link href="/careers" className="text-sm text-gray-500 hover:text-gray-700">Careers</Link>
-          <span className="text-gray-300">›</span>
-          <span className="text-sm text-gray-700">Apply</span>
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-zinc-100">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-2 text-sm">
+          <Link href="/" className="font-semibold text-zinc-900 tracking-tight">TalentAI</Link>
+          <ChevronRight className="h-4 w-4 text-zinc-300" strokeWidth={1.5} />
+          <Link href="/careers" className="text-zinc-400 hover:text-zinc-700 transition-colors">Careers</Link>
+          <ChevronRight className="h-4 w-4 text-zinc-300" strokeWidth={1.5} />
+          <span className="text-zinc-700">Apply</span>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Apply for This Role</h1>
-          <p className="text-gray-500 mt-1 text-sm">
+          <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">Apply for This Role</h1>
+          <p className="text-zinc-500 mt-1 text-sm">
             Your resume will be screened by our AI within minutes of submission.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="card p-6 space-y-5">
-            <h2 className="font-semibold text-gray-900">Personal Information</h2>
+            <h2 className="font-medium text-zinc-900">Personal Information</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
@@ -166,7 +165,7 @@ export default function ApplyPage({ params }: Props) {
 
             <div>
               <label className="label" htmlFor="portfolio_url">
-                Portfolio / GitHub URL <span className="text-gray-400 font-normal">(optional)</span>
+                Portfolio / GitHub URL <span className="text-zinc-400 font-normal">(optional)</span>
               </label>
               <input
                 id="portfolio_url"
@@ -179,24 +178,26 @@ export default function ApplyPage({ params }: Props) {
           </div>
 
           <div className="card p-6 space-y-5">
-            <h2 className="font-semibold text-gray-900">Resume Upload</h2>
+            <h2 className="font-medium text-zinc-900">Resume Upload</h2>
 
             <div>
               <label className="label">Resume / CV *</label>
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-brand-400 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-zinc-200 rounded-xl p-8 text-center hover:border-zinc-400 transition-colors cursor-pointer"
                 onClick={() => fileRef.current?.click()}
               >
                 {selectedFile ? (
                   <div>
-                    <div className="text-2xl mb-2">📄</div>
-                    <p className="font-medium text-gray-900">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <div className="flex justify-center mb-3">
+                      <FileText className="h-8 w-8 text-zinc-400" strokeWidth={1.5} />
+                    </div>
+                    <p className="font-medium text-zinc-800">{selectedFile.name}</p>
+                    <p className="text-sm text-zinc-400 mt-1">
                       {(selectedFile.size / 1024).toFixed(0)} KB
                     </p>
                     <button
                       type="button"
-                      className="text-xs text-brand-500 mt-2 hover:underline"
+                      className="text-xs text-zinc-500 hover:text-zinc-900 mt-2 underline underline-offset-2 transition-colors"
                       onClick={(e) => { e.stopPropagation(); setSelectedFile(null) }}
                     >
                       Change file
@@ -204,9 +205,11 @@ export default function ApplyPage({ params }: Props) {
                   </div>
                 ) : (
                   <div>
-                    <div className="text-3xl mb-3">📎</div>
-                    <p className="font-medium text-gray-700">Click to upload or drag & drop</p>
-                    <p className="text-sm text-gray-500 mt-1">PDF or DOCX — max 5MB</p>
+                    <div className="flex justify-center mb-3">
+                      <Upload className="h-8 w-8 text-zinc-300" strokeWidth={1.5} />
+                    </div>
+                    <p className="font-medium text-zinc-600">Click to upload or drag & drop</p>
+                    <p className="text-sm text-zinc-400 mt-1">PDF or DOCX — max 5MB</p>
                   </div>
                 )}
               </div>
@@ -225,16 +228,13 @@ export default function ApplyPage({ params }: Props) {
             disabled={isSubmitting || !selectedFile}
             className="btn-primary w-full justify-center py-3 text-base"
           >
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <span className="animate-spin">⟳</span> Submitting...
-              </span>
-            ) : (
-              'Submit Application →'
-            )}
+            {isSubmitting
+              ? <><Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> Submitting...</>
+              : 'Submit Application'
+            }
           </button>
 
-          <p className="text-xs text-center text-gray-400">
+          <p className="text-xs text-center text-zinc-400 leading-relaxed">
             By submitting, you agree to our use of AI to screen your application against the job requirements.
             Your data is processed securely and never shared with third parties.
           </p>

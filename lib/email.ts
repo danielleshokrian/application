@@ -17,11 +17,17 @@ async function send(options: {
   attachments?: Array<{ filename: string; content: string }>
 }) {
   if (!resend) {
-    console.log(`[Email MOCK] To: ${options.to} | Subject: ${options.subject}`)
-    console.log(`[Email MOCK] Body preview: ${options.html.slice(0, 200)}...`)
+    console.log(`[Email MOCK — no RESEND_API_KEY] To: ${options.to} | Subject: ${options.subject}`)
     return { id: `mock_email_${Date.now()}` }
   }
-  return await resend.emails.send({ from: FROM, ...options })
+  console.log(`[Email REAL] From: ${FROM} → To: ${options.to} | ${options.subject}`)
+  const result = await resend.emails.send({ from: FROM, ...options })
+  if (result.error) {
+    console.error(`[Email ERROR] Resend rejected: ${JSON.stringify(result.error)}`)
+  } else {
+    console.log(`[Email SENT] id=${result.data?.id}`)
+  }
+  return result
 }
 
 export async function sendApplicationConfirmation(params: {
@@ -54,6 +60,8 @@ export async function sendSchedulingEmail(params: {
   jobTitle: string
   slots: CalendarSlot[]
   schedulingToken: string
+  /** Optional note from candidate (when rescheduling) or from admin */
+  note?: string
 }) {
   const slotOptions = params.slots
     .map(
@@ -70,6 +78,12 @@ export async function sendSchedulingEmail(params: {
     )
     .join('')
 
+  const noteHtml = params.note
+    ? `<p style="background:#fffbea; border-left:3px solid #f59e0b; padding:10px 14px; margin:16px 0; font-size:13px; color:#78350f;">
+        <strong>Note:</strong> ${params.note}
+       </p>`
+    : ''
+
   return send({
     to: params.to,
     subject: `Schedule your interview — ${params.jobTitle}`,
@@ -78,6 +92,7 @@ export async function sendSchedulingEmail(params: {
   <h2 style="color: #1a2fa0;">You're Shortlisted! Let's Schedule Your Interview</h2>
   <p>Hi ${params.candidateName},</p>
   <p>Great news — after reviewing your application for <strong>${params.jobTitle}</strong>, we'd like to invite you to an interview. Please select one of the available 45-minute slots below:</p>
+  ${noteHtml}
   <table style="width:100%; border-collapse:collapse; margin:20px 0;">
     ${slotOptions}
   </table>

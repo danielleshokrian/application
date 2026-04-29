@@ -106,8 +106,16 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error('[Upload Error]', uploadError)
+      const isBucketMissing =
+        uploadError.message?.includes('Bucket not found') ||
+        uploadError.message?.includes('bucket') ||
+        (uploadError as { statusCode?: string }).statusCode === '404'
       return NextResponse.json(
-        { error: 'Failed to upload resume. Please try again.' },
+        {
+          error: isBucketMissing
+            ? 'Storage not configured. Please create a "resumes" bucket in Supabase Storage (Storage → New bucket → name: resumes → Public → Save).'
+            : `Resume upload failed: ${uploadError.message}`,
+        },
         { status: 500 }
       )
     }

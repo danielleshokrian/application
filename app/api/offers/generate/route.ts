@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 // Send offer to candidate
 export async function PUT(request: NextRequest) {
   try {
-    const { offerId } = await request.json()
+    const { offerId, letterContent } = await request.json()
 
     const { data: offer } = await supabaseAdmin
       .from('offer_letters')
@@ -110,10 +110,13 @@ export async function PUT(request: NextRequest) {
       signingToken: offer.signing_token,
     })
 
-    // Update status to 'sent' and update application status
+    // Update status to 'sent', persisting any edits made before sending
+    const updatePayload: Record<string, string> = { status: 'sent' }
+    if (letterContent) updatePayload.letter_content = letterContent
+
     await supabaseAdmin
       .from('offer_letters')
-      .update({ status: 'sent' })
+      .update(updatePayload)
       .eq('id', offerId)
 
     await supabaseAdmin
