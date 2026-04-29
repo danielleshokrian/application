@@ -102,41 +102,42 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
   const job = (application as { job?: Record<string, unknown> }).job
 
   return (
-    <div className="p-8 max-w-6xl">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <Link href="/admin/candidates" className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-700 mb-3 transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.5} /> Back to Candidates
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-zinc-100 flex items-center justify-center text-lg font-semibold text-zinc-600 shrink-0">
+    <div className="max-w-6xl">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-zinc-100 px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/admin/candidates" className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-700 transition-colors shrink-0">
+              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.5} /> Back
+            </Link>
+            <div className="w-px h-4 bg-zinc-200 shrink-0" />
+            <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-sm font-semibold text-zinc-600 shrink-0">
               {application.full_name.charAt(0)}
             </div>
-            <div>
-              <h1 className="text-xl font-semibold text-zinc-900">{application.full_name}</h1>
-              <div className="flex items-center gap-3 text-sm text-zinc-400 mt-0.5">
-                <span>{application.email}</span>
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold text-zinc-900 truncate">{application.full_name}</h1>
+              <div className="flex items-center gap-3 text-xs text-zinc-400">
+                <span className="truncate">{application.email}</span>
                 {application.linkedin_url && (
-                  <a href={application.linkedin_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors">
+                  <a href={application.linkedin_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors shrink-0">
                     LinkedIn <ExternalLink className="h-3 w-3" strokeWidth={1.5} />
                   </a>
                 )}
                 {application.portfolio_url && (
-                  <a href={application.portfolio_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors">
+                  <a href={application.portfolio_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors shrink-0">
                     Portfolio <ExternalLink className="h-3 w-3" strokeWidth={1.5} />
                   </a>
                 )}
               </div>
             </div>
           </div>
+          <span className={`badge text-xs px-3 py-1 shrink-0 ${STATUS_CLASSES[application.status]}`}>
+            {STATUS_LABELS[application.status]}
+          </span>
         </div>
-        <span className={`badge text-xs px-3 py-1 ${STATUS_CLASSES[application.status]}`}>
-          {STATUS_LABELS[application.status]}
-        </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* AI Screening Results */}
