@@ -10,6 +10,10 @@ function checkAuth(request: NextRequest) {
   return request.headers.get('authorization') === `Bearer ${apiKey}`
 }
 
+export async function GET(request: NextRequest) {
+  return POST(request)
+}
+
 export async function POST(request: NextRequest) {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
