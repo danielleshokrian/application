@@ -9,8 +9,8 @@
  */
 
 import crypto from 'crypto'
+import { slackAPI } from '@/lib/slack-internal'
 
-const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN
 const SLACK_TEAM_ID = process.env.SLACK_TEAM_ID
 const SLACK_HR_CHANNEL = process.env.SLACK_HR_CHANNEL_ID || '#hiring'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -21,29 +21,6 @@ const ONBOARDING_LINKS = {
   calendar: process.env.ONBOARDING_CALENDAR_URL || 'https://calendar.google.com',
   github: process.env.ONBOARDING_GITHUB_URL || 'https://github.com',
   hrEmail: process.env.HR_EMAIL || 'hr@talentai.io',
-}
-
-// ─── Core helper ────────────────────────────────────────────────────────────
-
-async function slackAPI(method: string, body: Record<string, unknown>) {
-  if (!SLACK_BOT_TOKEN) {
-    console.log(`[Slack MOCK — no SLACK_BOT_TOKEN] ${method}:`, JSON.stringify(body, null, 2))
-    return { ok: true, mock: true }
-  }
-
-  const res = await fetch(`https://slack.com/api/${method}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-  const data = await res.json()
-  if (!data.ok) {
-    console.warn(`[Slack] ${method} error: ${data.error}`)
-  }
-  return data
 }
 
 // ─── Signature verification ──────────────────────────────────────────────────
