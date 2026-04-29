@@ -5,9 +5,12 @@ import { slackAPI } from '@/lib/slack-internal'
 export const dynamic = 'force-dynamic'
 
 function checkAuth(request: NextRequest) {
+  const auth = request.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
   const apiKey = process.env.ADMIN_API_KEY
+  if (cronSecret && auth === `Bearer ${cronSecret}`) return true
   if (!apiKey) return true
-  return request.headers.get('authorization') === `Bearer ${apiKey}`
+  return auth === `Bearer ${apiKey}`
 }
 
 export async function POST(request: NextRequest) {
