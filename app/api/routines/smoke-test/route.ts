@@ -35,8 +35,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { protocol, host } = new URL(request.url)
-  const base = `${protocol}//${host}`
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
+  const proto = request.headers.get('x-forwarded-proto') || 'https'
+  const base = `${proto}://${host}`
 
   const checks = await Promise.all([
     probe('Health check', `${base}/api/health`, 200),
