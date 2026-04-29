@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
 import { slackAPI } from '@/lib/slack-internal'
 
 export const dynamic = 'force-dynamic'
@@ -9,53 +10,58 @@ function checkAuth(request: NextRequest) {
   return request.headers.get('authorization') === `Bearer ${apiKey}`
 }
 
-interface CheckResult {
-  name: string
-  url: string
-  status: number | null
-  latencyMs: number
-  pass: boolean
-  detail?: string
-}
-
-async function probe(name: string, url: string, expectStatus: number): Promise<CheckResult> {
-  const start = Date.now()
-  try {
-    const res = await fetch(url, { cache: 'no-store' })
-    const latencyMs = Date.now() - start
-    const pass = res.status === expectStatus
-    return { name, url, status: res.status, latencyMs, pass, detail: pass ? undefined : `Expected ${expectStatus}, got ${res.status}` }
-  } catch (e) {
-    return { name, url, status: null, latencyMs: Date.now() - start, pass: false, detail: String(e) }
-  }
-}
-
 export async function POST(request: NextRequest) {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
-  const proto = request.headers.get('x-forwarded-proto') || 'https'
-  const base = `${proto}://${host}`
+  const checks: { name: string; pass: boolean; detail?: string }[] = []
 
-  const checks = await Promise.all([
-    probe('Health check', `${base}/api/health`, 200),
-    probe('Applications list', `${base}/api/applications`, 200),
-    probe('Offer sign (bad token → 404)', `${base}/api/offers/sign?token=smoke-test`, 404),
-  ])
+  // Check 1: Supabase connectivity
+  try {
+    const { error } = await supabaseAdmin.from('applications').select('id').limit(1)
+    checks.push(error
+      ? { name: 'Database', pass: false, detail: error.message }
+      : { name: 'Database', pass: true }
+    )
+  } catch (e) {
+    checks.push({ name: 'Database', pass: false, detail: String(e) })
+  }
+
+  // Check 2: Required env vars
+  const required = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'ANTHROPIC_API_KEY']
+  const missing = required.filter(k => !process.env[k])
+  checks.push(missing.length === 0
+    ? { name: 'Environment variables', pass: true }
+    : { name: 'Environment variables', pass: false, detail: `Missing: ${missing.join(', ')}` }
+  )
+
+  // Check 3: Anthropic API reachable
+  try {
+    const res = await fetch('https://api.anthropic.com', { method: 'HEAD' })
+    checks.push({ name: 'Anthropic API reachable', pass: res.status < 500 })
+  } catch (e) {
+    checks.push({ name: 'Anthropic API reachable', pass: false, detail: String(e) })
+  }
+
+  // Check 4: Slack configured
+  checks.push({
+    name: 'Slack configured',
+    pass: !!process.env.SLACK_BOT_TOKEN,
+    detail: process.env.SLACK_BOT_TOKEN ? undefined : 'SLACK_BOT_TOKEN not set',
+  })
 
   const allPassed = checks.every(c => c.pass)
-  const channel = process.env.SLACK_HR_CHANNEL_ID ?? '#hiring'
   const timestamp = new Date().toUTCString()
+  const channel = process.env.SLACK_HR_CHANNEL_ID ?? '#hiring'
 
-  const resultLines = checks.map(c =>
-    `${c.pass ? 'PASS' : 'FAIL'} ${c.name} — ${c.status ?? 'no response'} (${c.latencyMs}ms)${c.detail ? ` — ${c.detail}` : ''}`
-  ).join('\n')
+  const resultLines = checks
+    .map(c => `${c.pass ? 'PASS' : 'FAIL'} ${c.name}${c.detail ? ` — ${c.detail}` : ''}`)
+    .join('\n')
 
   await slackAPI('chat.postMessage', {
     channel,
-    text: allPassed ? `Deploy healthy — ${timestamp}` : `Deploy alert — smoke test failed — ${timestamp}`,
+    text: allPassed ? `Deploy healthy — ${timestamp}` : `Deploy alert — ${timestamp}`,
     blocks: [
       {
         type: 'header',
@@ -75,5 +81,5 @@ export async function POST(request: NextRequest) {
     ],
   })
 
-  return NextResponse.json({ ok: allPassed, checks, timestamp, debug: { base } })
+  return NextResponse.json({ ok: allPassed, checks, timestamp })
 }
