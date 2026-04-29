@@ -76,5 +76,5 @@ export async function POST(request: NextRequest) {
     ],
   })
 
-  return NextResponse.json({ ok: allPassed, checks, timestamp })
+  return NextResponse.json({ ok: allPassed, checks, timestamp, debug: { base } })
 }
