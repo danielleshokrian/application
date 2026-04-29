@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const base = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+  const base = (process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
   if (!base) {
     return NextResponse.json({ error: 'NEXT_PUBLIC_APP_URL not set' }, { status: 500 })
   }
